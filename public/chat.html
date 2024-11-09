@@ -1,396 +1,440 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>실시간 채팅</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-        }
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+   <title>실시간 채팅</title>
+   <style>
+       * {
+           margin: 0;
+           padding: 0;
+           box-sizing: border-box;
+           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+       }
 
-        body {
-            height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
+       body {
+           height: 100vh;
+           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+       }
 
-        .chat-container {
-            display: flex;
-            height: 100vh;
-            gap: 20px;
-            padding: 20px;
-        }
+       .chat-container {
+           display: flex;
+           height: 100vh;
+           gap: 20px;
+           padding: 20px;
+       }
 
-        .chat-main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            overflow: hidden;
-        }
+       .chat-main {
+           flex: 1;
+           display: flex;
+           flex-direction: column;
+           background: rgba(255, 255, 255, 0.95);
+           border-radius: 15px;
+           overflow: hidden;
+       }
 
-        .chat-header {
-            background: #4a5568;
-            color: white;
-            padding: 1rem;
-            font-size: 1.2rem;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+       .chat-header {
+           background: #4a5568;
+           color: white;
+           padding: 1rem;
+           display: flex;
+           justify-content: space-between;
+           align-items: center;
+       }
 
-        #message-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 1rem;
-            background: #f7fafc;
-        }
+       .header-title {
+           font-size: 1.2rem;
+           font-weight: bold;
+       }
 
-        .message {
-            margin: 0.5rem 0;
-            padding: 0.8rem 1rem;
-            border-radius: 1.2rem;
-            max-width: 85%;
-            word-wrap: break-word;
-            animation: fadeIn 0.3s ease-in;
-        }
+       .header-buttons {
+           display: flex;
+           align-items: center;
+           gap: 1rem;
+       }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+       .leave-button {
+           background: #fc8181;
+           color: white;
+           border: none;
+           padding: 0.5rem 1rem;
+           border-radius: 0.5rem;
+           cursor: pointer;
+           font-size: 0.9rem;
+           transition: all 0.2s ease;
+       }
 
-        .system-message {
-            text-align: center;
-            background: #edf2f7;
-            margin: 0.5rem auto;
-            padding: 0.5rem 1rem;
-            border-radius: 0.8rem;
-            max-width: 80%;
-            color: #718096;
-            font-size: 0.85rem;
-        }
+       .leave-button:hover {
+           background: #f56565;
+           transform: translateY(-1px);
+       }
 
-        .user-message {
-            background: #4299e1;
-            color: white;
-            margin-left: auto;
-            border-bottom-right-radius: 0.3rem;
-        }
+       #message-container {
+           flex: 1;
+           overflow-y: auto;
+           padding: 1rem;
+           background: #f7fafc;
+       }
 
-        .other-message {
-            background: #e2e8f0;
-            color: #2d3748;
-            margin-right: auto;
-            border-bottom-left-radius: 0.3rem;
-        }
+       .message {
+           margin: 0.5rem 0;
+           padding: 0.8rem 1rem;
+           border-radius: 1.2rem;
+           max-width: 85%;
+           word-wrap: break-word;
+           animation: fadeIn 0.3s ease-in;
+       }
 
-        .message-time {
-            font-size: 0.7rem;
-            margin-top: 0.3rem;
-            opacity: 0.7;
-        }
+       @keyframes fadeIn {
+           from { opacity: 0; transform: translateY(10px); }
+           to { opacity: 1; transform: translateY(0); }
+       }
 
-        .message-input-container {
-            padding: 1rem;
-            background: white;
-            border-top: 1px solid #e2e8f0;
-        }
+       .system-message {
+           text-align: center;
+           background: #edf2f7;
+           margin: 0.5rem auto;
+           padding: 0.5rem 1rem;
+           border-radius: 0.8rem;
+           max-width: 80%;
+           color: #718096;
+           font-size: 0.85rem;
+       }
 
-        #message-form {
-            display: flex;
-            gap: 0.5rem;
-        }
+       .user-message {
+           background: #4299e1;
+           color: white;
+           margin-left: auto;
+           border-bottom-right-radius: 0.3rem;
+       }
 
-        #message-input {
-            flex: 1;
-            padding: 0.8rem 1.2rem;
-            border: 2px solid #e2e8f0;
-            border-radius: 20px;
-            outline: none;
-            font-size: 0.95rem;
-            appearance: none;
-            background-color: #ffffff;
-            color: #2d3748;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
+       .other-message {
+           background: #e2e8f0;
+           color: #2d3748;
+           margin-right: auto;
+           border-bottom-left-radius: 0.3rem;
+       }
 
-        #message-input:focus {
-            border-color: #4299e1;
-            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
-        }
+       .message-time {
+           font-size: 0.7rem;
+           margin-top: 0.3rem;
+           opacity: 0.7;
+       }
 
-        .send-button {
-            background: #4299e1;
-            color: white;
-            border: none;
-            padding: 0.8rem 1.2rem;
-            border-radius: 1.5rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.2s ease;
-        }
+       .message-input-container {
+           padding: 1rem;
+           background: white;
+           border-top: 1px solid #e2e8f0;
+       }
 
-        .send-button:hover {
-            background: #3182ce;
-            transform: translateY(-1px);
-        }
+       #message-form {
+           display: flex;
+           gap: 0.5rem;
+       }
 
-        .users-panel {
-            width: 280px;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            padding: 1rem;
-        }
+       #message-input {
+           flex: 1;
+           padding: 0.8rem 1.2rem;
+           border: 2px solid #e2e8f0;
+           border-radius: 20px;
+           outline: none;
+           font-size: 0.95rem;
+           appearance: none;
+           background-color: #ffffff;
+           color: #2d3748;
+           transition: all 0.2s ease;
+           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+       }
 
-        .users-header {
-            padding: 1rem;
-            font-weight: bold;
-            border-bottom: 1px solid #e2e8f0;
-            margin-bottom: 1rem;
-        }
+       #message-input:focus {
+           border-color: #4299e1;
+           box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
+       }
 
-        .user-item {
-            display: flex;
-            align-items: center;
-            padding: 0.8rem;
-            margin-bottom: 0.5rem;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
+       .send-button {
+           background: #4299e1;
+           color: white;
+           border: none;
+           padding: 0.8rem 1.2rem;
+           border-radius: 1.5rem;
+           font-weight: bold;
+           cursor: pointer;
+           transition: transform 0.2s ease;
+       }
 
-        .user-avatar {
-            width: 35px;
-            height: 35px;
-            background: #4299e1;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            margin-right: 0.8rem;
-        }
+       .send-button:hover {
+           background: #3182ce;
+           transform: translateY(-1px);
+       }
 
-        @media (max-width: 768px) {
-            .chat-container {
-                padding: 10px;
-            }
+       .users-panel {
+           width: 280px;
+           background: rgba(255, 255, 255, 0.95);
+           border-radius: 15px;
+           padding: 1rem;
+       }
 
-            .users-panel {
-                display: none;
-            }
+       .users-header {
+           padding: 1rem;
+           font-weight: bold;
+           border-bottom: 1px solid #e2e8f0;
+           margin-bottom: 1rem;
+       }
 
-            #message-input {
-                padding: 0.7rem 1rem;
-            }
+       .user-item {
+           display: flex;
+           align-items: center;
+           padding: 0.8rem;
+           margin-bottom: 0.5rem;
+           background: white;
+           border-radius: 10px;
+           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+       }
 
-            .send-button {
-                padding: 0.7rem 1rem;
-            }
+       .user-avatar {
+           width: 35px;
+           height: 35px;
+           background: #4299e1;
+           border-radius: 50%;
+           display: flex;
+           align-items: center;
+           justify-content: center;
+           color: white;
+           font-weight: bold;
+           margin-right: 0.8rem;
+       }
 
-            .message {
-                max-width: 90%;
-                font-size: 0.9rem;
-            }
-        }
-    </style>
+       @media (max-width: 768px) {
+           .chat-container {
+               padding: 10px;
+           }
+
+           .users-panel {
+               display: none;
+           }
+
+           .leave-button {
+               padding: 0.4rem 0.8rem;
+               font-size: 0.85rem;
+           }
+
+           #message-input {
+               padding: 0.7rem 1rem;
+           }
+
+           .send-button {
+               padding: 0.7rem 1rem;
+           }
+
+           .message {
+               max-width: 90%;
+               font-size: 0.9rem;
+           }
+       }
+   </style>
 </head>
 <body>
-    <div class="chat-container">
-        <div class="chat-main">
-            <div class="chat-header">
-                <span>실시간 채팅</span>
-                <span id="online-count">접속자 0명</span>
-            </div>
-            <div id="message-container"></div>
-            <div class="message-input-container">
-                <form id="message-form">
-                    <input 
-                        type="text" 
-                        id="message-input" 
-                        placeholder="메시지를 입력하세요..." 
-                        autocomplete="off"
-                        maxlength="1000"
-                    >
-                    <button type="submit" class="send-button">전송</button>
-                </form>
-            </div>
-        </div>
-        <div class="users-panel">
-            <div class="users-header">
-                참여자 목록 (<span id="user-count">0</span>명)
-            </div>
-            <div id="users-list"></div>
-        </div>
-    </div>
+   <div class="chat-container">
+       <div class="chat-main">
+           <div class="chat-header">
+               <span class="header-title">실시간 채팅</span>
+               <div class="header-buttons">
+                   <span id="online-count">접속자 0명</span>
+                   <button id="leave-btn" class="leave-button">나가기</button>
+               </div>
+           </div>
+           <div id="message-container"></div>
+           <div class="message-input-container">
+               <form id="message-form">
+                   <input 
+                       type="text" 
+                       id="message-input" 
+                       placeholder="메시지를 입력하세요..." 
+                       autocomplete="off"
+                       maxlength="1000"
+                   >
+                   <button type="submit" class="send-button">전송</button>
+               </form>
+           </div>
+       </div>
+       <div class="users-panel">
+           <div class="users-header">
+               참여자 목록 (<span id="user-count">0</span>명)
+           </div>
+           <div id="users-list"></div>
+       </div>
+   </div>
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-        // 닉네임 확인
-        const nickname = localStorage.getItem('chatNickname');
-        if (!nickname) {
-            window.location.href = '/';
-        }
+   <script src="/socket.io/socket.io.js"></script>
+   <script>
+       // 닉네임 확인
+       const nickname = localStorage.getItem('chatNickname');
+       if (!nickname) {
+           window.location.href = '/';
+       }
 
-        const socket = io();
-        const messageForm = document.getElementById('message-form');
-        const messageInput = document.getElementById('message-input');
-        const messageContainer = document.getElementById('message-container');
-        const usersList = document.getElementById('users-list');
-        const userCount = document.getElementById('user-count');
-        const onlineCount = document.getElementById('online-count');
+       const socket = io();
+       const messageForm = document.getElementById('message-form');
+       const messageInput = document.getElementById('message-input');
+       const messageContainer = document.getElementById('message-container');
+       const usersList = document.getElementById('users-list');
+       const userCount = document.getElementById('user-count');
+       const onlineCount = document.getElementById('online-count');
+       const leaveBtn = document.getElementById('leave-btn');
 
-        // 저장된 메시지 로드
-        function loadMessages() {
-            const messages = JSON.parse(localStorage.getItem('messages') || '[]');
-            messages.forEach(msg => {
-                const messageElement = createMessageElement(msg.content, msg.type, msg.time);
-                messageContainer.appendChild(messageElement);
-            });
-            scrollToBottom();
-        }
+       // 채팅방 나가기
+       leaveBtn.addEventListener('click', () => {
+           if (confirm('채팅방을 나가시겠습니까?')) {
+               localStorage.removeItem('chatNickname');
+               localStorage.removeItem('messages');
+               socket.disconnect();
+               window.location.href = '/';
+           }
+       });
 
-        // 초기 로드
-        loadMessages();
+       // 저장된 메시지 로드
+       function loadMessages() {
+           const messages = JSON.parse(localStorage.getItem('messages') || '[]');
+           messages.forEach(msg => {
+               const messageElement = createMessageElement(msg.content, msg.type, msg.time);
+               messageContainer.appendChild(messageElement);
+           });
+           scrollToBottom();
+       }
 
-        // 채팅방 입장
-        socket.emit('new-user', nickname);
+       // 초기 로드
+       loadMessages();
 
-        // 메시지 수신
-        socket.on('chat-message', data => {
-            const content = `${data.nickname}: ${data.message}`;
-            appendMessage(content, 'other-message');
-        });
+       // 채팅방 입장
+       socket.emit('new-user', nickname);
 
-        // 사용자 접속
-        socket.on('user-connected', data => {
-            appendSystemMessage(`${data.nickname}님이 접속했습니다.`);
-            updateUserCount(data.userCount);
-        });
+       // 메시지 수신
+       socket.on('chat-message', data => {
+           const content = `${data.nickname}: ${data.message}`;
+           appendMessage(content, 'other-message');
+       });
 
-        // 사용자 퇴장
-        socket.on('user-disconnected', data => {
-            appendSystemMessage(`${data.nickname}님이 퇴장했습니다.`);
-            updateUserCount(data.userCount);
-        });
+       // 사용자 접속
+       socket.on('user-connected', data => {
+           appendSystemMessage(`${data.nickname}님이 접속했습니다.`);
+           updateUserCount(data.userCount);
+       });
 
-        // 사용자 목록 업데이트
-        socket.on('users-update', data => {
-            updateUsersList(data.users);
-            updateUserCount(data.userCount);
-        });
+       // 사용자 퇴장
+       socket.on('user-disconnected', data => {
+           appendSystemMessage(`${data.nickname}님이 퇴장했습니다.`);
+           updateUserCount(data.userCount);
+       });
 
-        // 메시지 전송
-        messageForm.addEventListener('submit', e => {
-            e.preventDefault();
-            const message = messageInput.value.trim();
-            
-            if (message) {
-                const content = `${nickname}: ${message}`;
-                appendMessage(content, 'user-message');
-                socket.emit('send-chat-message', message);
-                messageInput.value = '';
-            }
-        });
+       // 사용자 목록 업데이트
+       socket.on('users-update', data => {
+           updateUsersList(data.users);
+           updateUserCount(data.userCount);
+       });
 
-        // 메시지 요소 생성
-        function createMessageElement(content, type, time = getCurrentTime()) {
-            const messageElement = document.createElement('div');
-            messageElement.className = `message ${type}`;
-            
-            const messageContent = document.createElement('div');
-            messageContent.textContent = content;
-            
-            const timeElement = document.createElement('div');
-            timeElement.className = 'message-time';
-            timeElement.textContent = time;
-            
-            messageElement.appendChild(messageContent);
-            messageElement.appendChild(timeElement);
-            
-            return messageElement;
-        }
+       // 메시지 전송
+       messageForm.addEventListener('submit', e => {
+           e.preventDefault();
+           const message = messageInput.value.trim();
+           
+           if (message) {
+               const content = `${nickname}: ${message}`;
+               appendMessage(content, 'user-message');
+               socket.emit('send-chat-message', message);
+               messageInput.value = '';
+           }
+       });
 
-        // 메시지 추가
-        function appendMessage(content, type) {
-            const time = getCurrentTime();
-            const messageElement = createMessageElement(content, type, time);
-            messageContainer.appendChild(messageElement);
-            
-            // 메시지 저장
-            const messages = JSON.parse(localStorage.getItem('messages') || '[]');
-            messages.push({ content, type, time });
-            if (messages.length > 100) messages.shift();
-            localStorage.setItem('messages', JSON.stringify(messages));
-            
-            scrollToBottom();
-        }
+       // 메시지 요소 생성
+       function createMessageElement(content, type, time = getCurrentTime()) {
+           const messageElement = document.createElement('div');
+           messageElement.className = `message ${type}`;
+           
+           const messageContent = document.createElement('div');
+           messageContent.textContent = content;
+           
+           const timeElement = document.createElement('div');
+           timeElement.className = 'message-time';
+           timeElement.textContent = time;
+           
+           messageElement.appendChild(messageContent);
+           messageElement.appendChild(timeElement);
+           
+           return messageElement;
+       }
 
-        // 시스템 메시지
-        function appendSystemMessage(content) {
-            const messageElement = document.createElement('div');
-            messageElement.className = 'message system-message';
-            messageElement.textContent = content;
-            messageContainer.appendChild(messageElement);
-            scrollToBottom();
-        }
+       // 메시지 추가
+       function appendMessage(content, type) {
+           const time = getCurrentTime();
+           const messageElement = createMessageElement(content, type, time);
+           messageContainer.appendChild(messageElement);
+           
+           // 메시지 저장
+           const messages = JSON.parse(localStorage.getItem('messages') || '[]');
+           messages.push({ content, type, time });
+           if (messages.length > 100) messages.shift();
+           localStorage.setItem('messages', JSON.stringify(messages));
+           
+           scrollToBottom();
+       }
 
-        // 사용자 목록 업데이트
-        function updateUsersList(users) {
-            usersList.innerHTML = '';
-            users.forEach(user => {
-                const userElement = document.createElement('div');
-                userElement.className = 'user-item';
-                
-                const avatar = document.createElement('div');
-                avatar.className = 'user-avatar';
-                avatar.textContent = user.nickname.charAt(0).toUpperCase();
+       // 시스템 메시지
+       function appendSystemMessage(content) {
+           const messageElement = document.createElement('div');
+           messageElement.className = 'message system-message';
+           messageElement.textContent = content;
+           messageContainer.appendChild(messageElement);
+           scrollToBottom();
+       }
 
-                const nickname = document.createElement('div');
-                nickname.textContent = user.nickname;
+       // 사용자 목록 업데이트
+       function updateUsersList(users) {
+           usersList.innerHTML = '';
+           users.forEach(user => {
+               const userElement = document.createElement('div');
+               userElement.className = 'user-item';
+               
+               const avatar = document.createElement('div');
+               avatar.className = 'user-avatar';
+               avatar.textContent = user.nickname.charAt(0).toUpperCase();
 
-                userElement.appendChild(avatar);
-                userElement.appendChild(nickname);
-                usersList.appendChild(userElement);
-            });
-        }
+               const nickname = document.createElement('div');
+               nickname.textContent = user.nickname;
 
-        // 사용자 수 업데이트
-        function updateUserCount(count) {
-            userCount.textContent = count;
-            onlineCount.textContent = `접속자 ${count}명`;
-        }
+               userElement.appendChild(avatar);
+               userElement.appendChild(nickname);
+               usersList.appendChild(userElement);
+           });
+       }
 
-        // 현재 시간 포맷
-        function getCurrentTime() {
-            return new Date().toLocaleTimeString('ko-KR', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        }
+       // 사용자 수 업데이트
+       function updateUserCount(count) {
+           userCount.textContent = count;
+           onlineCount.textContent = `접속자 ${count}명`;
+       }
 
-        // 스크롤 최하단으로
-        function scrollToBottom() {
-            messageContainer.scrollTop = messageContainer.scrollHeight;
-        }
+       // 현재 시간 포맷
+       function getCurrentTime() {
+           return new Date().toLocaleTimeString('ko-KR', {
+               hour: '2-digit',
+               minute: '2-digit'
+           });
+       }
 
-        // 페이지 로드 시 입력창 포커스
-        window.onload = () => {
-            messageInput.focus();
-        };
+       // 스크롤 최하단으로
+       function scrollToBottom() {
+           messageContainer.scrollTop = messageContainer.scrollHeight;
+       }
 
-        // 모바일 키보드 대응
-        messageInput.addEventListener('focus', () => {
-            setTimeout(scrollToBottom, 300);
-        });
-    </script>
+       // 페이지 로드 시 입력창 포커스
+       window.onload = () => {
+           messageInput.focus();
+       };
+
+       // 모바일 키보드 대응
+       messageInput.addEventListener('focus', () => {
+           setTimeout(scrollToBottom, 300);
+       });
+   </script>
 </body>
 </html>

@@ -1,16 +1,15 @@
-// public/index.html
 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>채팅 시작하기</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
         }
 
         body {
@@ -29,13 +28,14 @@
             backdrop-filter: blur(4px);
             width: 90%;
             max-width: 400px;
-            text-align: center;
         }
 
         .login-title {
             color: #4a5568;
             margin-bottom: 1.5rem;
             font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
         }
 
         .nickname-form {
@@ -63,13 +63,6 @@
             box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
         }
 
-        .error-message {
-            color: #e53e3e;
-            font-size: 0.875rem;
-            margin-top: 0.5rem;
-            display: none;
-        }
-
         .submit-btn {
             background: #4299e1;
             color: white;
@@ -93,19 +86,11 @@
             transform: none;
         }
 
-        .loading {
-            display: inline-block;
-            width: 1rem;
-            height: 1rem;
-            border: 2px solid #ffffff;
-            border-radius: 50%;
-            border-top-color: transparent;
-            animation: spin 1s linear infinite;
-            margin-right: 0.5rem;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        @media (max-width: 480px) {
+            .login-container {
+                width: 95%;
+                padding: 1.5rem;
+            }
         }
     </style>
 </head>
@@ -123,10 +108,9 @@
                     autocomplete="off"
                     required
                 >
-                <div id="error-message" class="error-message"></div>
             </div>
             <button type="submit" id="submit-btn" class="submit-btn">
-                시작하기
+                채팅방 입장하기
             </button>
         </form>
     </div>
@@ -134,74 +118,35 @@
     <script>
         const nicknameForm = document.getElementById('nickname-form');
         const nicknameInput = document.getElementById('nickname-input');
-        const errorMessage = document.getElementById('error-message');
         const submitBtn = document.getElementById('submit-btn');
 
-        // 이전에 저장된 닉네임이 있으면 채팅방으로 자동 이동
-        window.onload = () => {
+        // 페이지 로드 시 저장된 닉네임이 있다면 채팅방으로 이동
+        window.onload = function() {
             const savedNickname = localStorage.getItem('chatNickname');
             if (savedNickname) {
                 window.location.href = '/chat.html';
             }
         };
 
-        // 닉네임 중복 검사 및 폼 제출
+        // 폼 제출 처리
         nicknameForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const nickname = nicknameInput.value.trim();
-            if (!nickname) {
-                showError('닉네임을 입력해주세요.');
+            
+            // 닉네임 유효성 검사
+            if (!nickname || nickname.length < 2) {
+                alert('닉네임은 2자 이상이어야 합니다.');
                 return;
             }
 
-            // 입력 확인
-            if (nickname.length < 2) {
-                showError('닉네임은 2자 이상이어야 합니다.');
-                return;
-            }
-
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="loading"></span>확인 중...';
-
-            try {
-                const response = await fetch('/check-nickname', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ nickname })
-                });
-
-                const data = await response.json();
-
-                if (data.isAvailable) {
-                    // 닉네임 저장 및 채팅방 입장
-                    localStorage.setItem('chatNickname', nickname);
-                    window.location.href = '/chat.html';
-                } else {
-                    showError('이미 사용 중인 닉네임입니다.');
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = '시작하기';
-                }
-            } catch (error) {
-                showError('서버 오류가 발생했습니다. 다시 시도해주세요.');
-                submitBtn.disabled = false;
-                submitBtn.textContent = '시작하기';
-            }
+            // 닉네임 저장 및 채팅방 입장
+            localStorage.setItem('chatNickname', nickname);
+            window.location.href = '/chat.html';
         });
 
-        function showError(message) {
-            errorMessage.textContent = message;
-            errorMessage.style.display = 'block';
-            nicknameInput.classList.add('error');
-        }
-
-        nicknameInput.addEventListener('input', () => {
-            errorMessage.style.display = 'none';
-            nicknameInput.classList.remove('error');
-            submitBtn.disabled = false;
-        });
+        // 입력창 자동 포커스
+        nicknameInput.focus();
     </script>
 </body>
 </html>
