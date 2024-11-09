@@ -55,19 +55,6 @@
             background: #f7fafc;
         }
 
-        #message-container::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        #message-container::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-
-        #message-container::-webkit-scrollbar-thumb {
-            background: #cbd5e0;
-            border-radius: 3px;
-        }
-
         .message {
             margin: 0.5rem 0;
             padding: 0.8rem 1rem;
@@ -84,14 +71,14 @@
         }
 
         .system-message {
-            color: #718096;
-            font-style: italic;
             text-align: center;
             background: #edf2f7;
             margin: 0.5rem auto;
             padding: 0.5rem 1rem;
             border-radius: 0.5rem;
             max-width: 60%;
+            color: #718096;
+            font-style: italic;
         }
 
         .user-message {
@@ -134,7 +121,7 @@
             box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
         }
 
-        .send-button {
+        button {
             background: #4299e1;
             color: white;
             border: none;
@@ -143,18 +130,11 @@
             cursor: pointer;
             font-weight: bold;
             transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
         }
 
-        .send-button:hover {
+        button:hover {
             background: #3182ce;
             transform: translateY(-1px);
-        }
-
-        .send-button:active {
-            transform: translateY(0);
         }
 
         .users-panel {
@@ -165,48 +145,25 @@
             display: flex;
             flex-direction: column;
             box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-            backdrop-filter: blur(4px);
         }
 
         .users-header {
-            padding: 1rem;
-            background: #4a5568;
-            color: white;
-            border-radius: 10px;
-            text-align: center;
+            padding: 0.8rem;
+            font-weight: bold;
+            border-bottom: 1px solid #e2e8f0;
             margin-bottom: 1rem;
-        }
-
-        .users-list {
-            flex: 1;
-            overflow-y: auto;
         }
 
         .user-item {
             display: flex;
             align-items: center;
-            padding: 0.8rem;
-            border-radius: 8px;
+            padding: 0.5rem;
             margin-bottom: 0.5rem;
-            background: white;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(-10px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
         }
 
         .user-avatar {
-            width: 40px;
-            height: 40px;
+            width: 35px;
+            height: 35px;
             background: #4299e1;
             border-radius: 50%;
             display: flex;
@@ -217,47 +174,14 @@
             margin-right: 0.8rem;
         }
 
-        .user-info {
-            flex: 1;
-        }
-
-        .user-nickname {
-            font-weight: bold;
-            color: #2d3748;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .online-status {
-            width: 8px;
-            height: 8px;
-            background: #48bb78;
-            border-radius: 50%;
-            display: inline-block;
-        }
-
-        .typing-indicator {
-            color: #718096;
-            font-style: italic;
-            padding: 0.5rem;
-            text-align: center;
-            display: none;
-        }
-
         @media (max-width: 768px) {
             .chat-container {
                 flex-direction: column;
                 padding: 10px;
             }
-
             .users-panel {
                 width: 100%;
                 max-height: 200px;
-            }
-
-            .chat-main {
-                height: calc(100vh - 240px);
             }
         }
     </style>
@@ -270,35 +194,24 @@
                 <span id="online-count">접속자 0명</span>
             </div>
             <div id="message-container"></div>
-            <div class="typing-indicator" id="typing-indicator"></div>
             <div class="message-input-container">
                 <form id="message-form">
-                    <input 
-                        type="text" 
-                        id="message-input" 
-                        placeholder="메시지를 입력하세요..." 
-                        autocomplete="off"
-                    >
-                    <button type="submit" class="send-button">
-                        전송
-                    </button>
+                    <input type="text" id="message-input" placeholder="메시지를 입력하세요..." autocomplete="off">
+                    <button type="submit">전송</button>
                 </form>
             </div>
         </div>
         <div class="users-panel">
             <div class="users-header">
-                <h3>참여자 목록</h3>
-                <div id="user-count">0명</div>
+                참여자 목록 (<span id="user-count">0</span>명)
             </div>
-            <div class="users-list" id="users-list">
-                <!-- 사용자 목록이 여기에 동적으로 추가됩니다 -->
-            </div>
+            <div id="users-list"></div>
         </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // 닉네임 확인
+        // 닉네임 체크
         const nickname = localStorage.getItem('chatNickname');
         if (!nickname) {
             window.location.href = '/';
@@ -311,16 +224,38 @@
         const usersList = document.getElementById('users-list');
         const userCount = document.getElementById('user-count');
         const onlineCount = document.getElementById('online-count');
-        const typingIndicator = document.getElementById('typing-indicator');
 
-        let typingTimeout;
+        // 메시지 저장소 초기화
+        let messages = JSON.parse(localStorage.getItem('messages')) || [];
+        localStorage.setItem('messages', JSON.stringify(messages));
 
-        // 채팅방 접속
+        // 저장된 메시지 로드
+        messages.forEach(msg => {
+            const messageElement = document.createElement('div');
+            messageElement.className = `message ${msg.type}`;
+            messageElement.textContent = msg.content;
+            messageContainer.appendChild(messageElement);
+        });
+
+        // 채팅방 입장
         socket.emit('new-user', nickname);
 
         // 메시지 수신
         socket.on('chat-message', data => {
-            appendMessage(data.nickname, data.message, 'other-message');
+            const content = `${data.nickname}: ${data.message}`;
+            appendMessage(content, 'other-message');
+        });
+
+        // 사용자 접속
+        socket.on('user-connected', data => {
+            appendMessage(`${data.nickname}님이 접속했습니다.`, 'system-message');
+            updateUserCount(data.userCount);
+        });
+
+        // 사용자 퇴장
+        socket.on('user-disconnected', data => {
+            appendMessage(`${data.nickname}님이 퇴장했습니다.`, 'system-message');
+            updateUserCount(data.userCount);
         });
 
         // 사용자 목록 업데이트
@@ -329,69 +264,38 @@
             updateUserCount(data.userCount);
         });
 
-        // 새 사용자 접속
-        socket.on('user-connected', data => {
-            appendSystemMessage(`${data.nickname}님이 접속했습니다.`);
-            updateUserCount(data.userCount);
-        });
-
-        // 사용자 퇴장
-        socket.on('user-disconnected', data => {
-            appendSystemMessage(`${data.nickname}님이 퇴장했습니다.`);
-            updateUserCount(data.userCount);
-        });
-
-        // 타이핑 표시
-        socket.on('user-typing', nickname => {
-            typingIndicator.textContent = `${nickname}님이 입력 중입니다...`;
-            typingIndicator.style.display = 'block';
-        });
-
-        socket.on('user-stop-typing', () => {
-            typingIndicator.style.display = 'none';
-        });
-
         // 메시지 전송
         messageForm.addEventListener('submit', e => {
             e.preventDefault();
             const message = messageInput.value.trim();
             
             if (message) {
-                appendMessage('나', message, 'user-message');
+                const content = `${nickname}: ${message}`;  // 닉네임으로 표시
+                appendMessage(content, 'user-message');
                 socket.emit('send-chat-message', message);
                 messageInput.value = '';
             }
         });
 
-        // 타이핑 이벤트
-        messageInput.addEventListener('input', () => {
-            socket.emit('typing');
-            
-            clearTimeout(typingTimeout);
-            typingTimeout = setTimeout(() => {
-                socket.emit('stop-typing');
-            }, 1000);
-        });
-
         // 메시지 추가 함수
-        function appendMessage(sender, message, className) {
+        function appendMessage(content, type) {
             const messageElement = document.createElement('div');
-            messageElement.className = `message ${className}`;
-            messageElement.textContent = `${sender}: ${message}`;
+            messageElement.className = `message ${type}`;
+            messageElement.textContent = content;
             messageContainer.appendChild(messageElement);
             messageContainer.scrollTop = messageContainer.scrollHeight;
+
+            // 시스템 메시지가 아닌 경우에만 저장
+            if (type !== 'system-message') {
+                messages.push({ content, type });
+                if (messages.length > 50) {  // 최대 50개 메시지 유지
+                    messages.shift();
+                }
+                localStorage.setItem('messages', JSON.stringify(messages));
+            }
         }
 
-        // 시스템 메시지 추가 함수
-        function appendSystemMessage(message) {
-            const messageElement = document.createElement('div');
-            messageElement.className = 'message system-message';
-            messageElement.textContent = message;
-            messageContainer.appendChild(messageElement);
-            messageContainer.scrollTop = messageContainer.scrollHeight;
-        }
-
-        // 사용자 목록 업데이트 함수
+        // 사용자 목록 업데이트
         function updateUsersList(users) {
             usersList.innerHTML = '';
             users.forEach(user => {
@@ -402,32 +306,25 @@
                 avatar.className = 'user-avatar';
                 avatar.textContent = user.nickname.charAt(0).toUpperCase();
 
-                const userInfo = document.createElement('div');
-                userInfo.className = 'user-info';
-                
                 const nickname = document.createElement('div');
-                nickname.className = 'user-nickname';
-                nickname.innerHTML = `
-                    <span class="online-status"></span>
-                    ${user.nickname}
-                `;
+                nickname.textContent = user.nickname;
 
-                userInfo.appendChild(nickname);
                 userElement.appendChild(avatar);
-                userElement.appendChild(userInfo);
+                userElement.appendChild(nickname);
                 usersList.appendChild(userElement);
             });
         }
 
-        // 사용자 수 업데이트 함수
+        // 사용자 수 업데이트
         function updateUserCount(count) {
-            userCount.textContent = `${count}명`;
+            userCount.textContent = count;
             onlineCount.textContent = `접속자 ${count}명`;
         }
 
-        // 페이지 로드 시 입력창에 포커스
+        // 페이지 로드 시 입력창 포커스
         window.onload = () => {
             messageInput.focus();
+            messageContainer.scrollTop = messageContainer.scrollHeight;
         };
     </script>
 </body>
